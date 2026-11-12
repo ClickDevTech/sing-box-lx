@@ -30,7 +30,6 @@ import (
 	"github.com/sagernet/sing-box/adapter"
 	C "github.com/sagernet/sing-box/constant"
 	"github.com/sagernet/sing-box/option"
-	"github.com/sagernet/sing/common"
 	"github.com/sagernet/sing/common/debug"
 	E "github.com/sagernet/sing/common/exceptions"
 	"github.com/sagernet/sing/common/logger"
@@ -207,18 +206,7 @@ func (e *RealityClientConfig) prepareClientHello(conn net.Conn) (*utls.UConn, *r
 	// «reality verification failed», неотличимо от чужого ключа.
 	switch e.keyShare {
 	case C.RealityKeyShareClassical:
-		for _, extension := range uConn.Extensions {
-			if curves, isCurves := extension.(*utls.SupportedCurvesExtension); isCurves {
-				curves.Curves = common.Filter(curves.Curves, func(curveID utls.CurveID) bool {
-					return curveID != utls.X25519MLKEM768
-				})
-			}
-			if keyShares, isKeyShares := extension.(*utls.KeyShareExtension); isKeyShares {
-				keyShares.KeyShares = common.Filter(keyShares.KeyShares, func(share utls.KeyShare) bool {
-					return share.Group != utls.X25519MLKEM768
-				})
-			}
-		}
+		lxStripHybridKeyShare(uConn) // lx: SPEC 156 — shared with utls.key_share
 		// Second build re-marshals the hello from the filtered extensions
 		// (the preset is applied once; see utls buildHandshakeState).
 		err = uConn.BuildHandshakeState()
