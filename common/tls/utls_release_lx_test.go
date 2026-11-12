@@ -170,7 +170,7 @@ func TestLxUTLSReleaseFailedHandshakeKeepsState(t *testing.T) {
 	defer conn.Close()
 	err := conn.HandshakeContext(context.Background())
 	require.Error(t, err)
-	require.True(t, conn.alpnApplied)
+	require.True(t, conn.helloPrepared)
 	require.NotNil(t, conn.HandshakeState.Hello)
 	require.NotNil(t, conn.Extensions)
 	require.Error(t, conn.HandshakeContext(context.Background()))

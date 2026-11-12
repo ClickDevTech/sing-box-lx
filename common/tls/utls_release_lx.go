@@ -31,9 +31,10 @@ import (
 
 type lxUTLSConn struct {
 	utlsALPNWrapper
-	nextProtos  []string
-	alpnApplied bool
-	access      sync.Mutex
+	nextProtos    []string
+	keyShare      string // SPEC 156 — C.RealityKeyShare*
+	helloPrepared bool
+	access        sync.Mutex
 }
 
 func newLXUTLSConn(uConn *utls.UConn, nextProtos []string) *lxUTLSConn {
@@ -43,16 +44,23 @@ func newLXUTLSConn(uConn *utls.UConn, nextProtos []string) *lxUTLSConn {
 	}
 }
 
+// withKeyShare sets the SPEC 156 `utls.key_share` policy, applied with the ALPN
+// override in the first HandshakeContext.
+func (c *lxUTLSConn) withKeyShare(keyShare string) *lxUTLSConn {
+	c.keyShare = keyShare
+	return c
+}
+
 func (c *lxUTLSConn) HandshakeContext(ctx context.Context) error {
 	c.access.Lock()
 	defer c.access.Unlock()
-	if !c.alpnApplied && len(c.nextProtos) > 0 {
+	if !c.helloPrepared && (len(c.nextProtos) > 0 || c.keyShare != "") {
 		// A failed build leaves the flag unset: a retry rebuilds, as upstream.
-		err := lxApplyALPN(c.UConn, c.nextProtos)
+		err := lxPrepareHello(c.UConn, c.nextProtos, c.keyShare)
 		if err != nil {
 			return err
 		}
-		c.alpnApplied = true
+		c.helloPrepared = true
 	}
 	err := c.UConn.HandshakeContext(ctx)
 	if err != nil {
@@ -62,6 +70,21 @@ func (c *lxUTLSConn) HandshakeContext(ctx context.Context) error {
 	}
 	releaseHandshakeState(c.UConn)
 	return nil
+}
+
+// lxPrepareHello builds the ClientHello once: the ALPN override (SPEC 122), then
+// the key_share policy (SPEC 156). Without a policy the wire is what upstream sends.
+func lxPrepareHello(uConn *utls.UConn, nextProtos []string, keyShare string) error {
+	var err error
+	if len(nextProtos) > 0 {
+		err = lxApplyALPN(uConn, nextProtos)
+	} else {
+		err = uConn.BuildHandshakeState()
+	}
+	if err != nil || keyShare == "" {
+		return err
+	}
+	return lxApplyKeyShare(uConn, keyShare)
 }
 
 // lxApplyALPN builds the ClientHello and replaces the preset's ALPN list
