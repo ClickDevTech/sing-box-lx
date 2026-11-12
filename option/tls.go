@@ -248,6 +248,13 @@ type OutboundUTLSOptions struct {
 	Enabled bool `json:"enabled,omitempty"`
 	// lx: SPEC 118 — `chrome_155` is the opt-in Chrome 155 preset from the utls fork.
 	Fingerprint string `json:"fingerprint,omitempty" enum:"chrome_psk,chrome_psk_shuffle,chrome_padding_psk_shuffle,chrome_pq,chrome_pq_psk,chrome,chrome_155,firefox,edge,safari,360,qq,ios,android,random,randomized"`
+	// lx:begin SPEC 156
+	// KeyShare is `reality.key_share` for plain TLS: "" = as the fingerprint
+	// carries it, "classical" = X25519MLKEM768 stripped from key_share and
+	// supported_groups (a one-segment hello any TLS server accepts), "hybrid" =
+	// X25519MLKEM768 required. With REALITY use reality.key_share.
+	KeyShare string `json:"key_share,omitempty" enum:"hybrid,classical"`
+	// lx:end SPEC 156
 }
 
 type OutboundRealityOptions struct {
