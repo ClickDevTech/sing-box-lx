@@ -39,6 +39,7 @@ type UTLSClientConfig struct {
 	recordFragment        bool
 	spoof                 string
 	spoofMethod           tlsspoof.Method
+	keyShare              string // lx: SPEC 156 — utls.key_share, C.RealityKeyShare*
 }
 
 func (c *UTLSClientConfig) ServerName() string {
@@ -99,7 +100,7 @@ func (c *UTLSClientConfig) Client(conn net.Conn) (Conn, error) {
 	if err != nil {
 		return nil, err
 	}
-	return newLXUTLSConn(utls.UClient(conn, c.config.Clone(), c.id), c.config.NextProtos), nil // lx: SPEC 122 — ALPN once, release the handshake state
+	return newLXUTLSConn(utls.UClient(conn, c.config.Clone(), c.id), c.config.NextProtos).withKeyShare(c.keyShare), nil // lx: SPEC 122 — ALPN once, release the handshake state; SPEC 156 — key_share
 }
 
 func (c *UTLSClientConfig) SetSessionIDGenerator(generator func(clientHello []byte, sessionID []byte) error) {
@@ -120,6 +121,7 @@ func (c *UTLSClientConfig) Clone() Config {
 		recordFragment:        c.recordFragment,
 		spoof:                 c.spoof,
 		spoofMethod:           c.spoofMethod,
+		keyShare:              c.keyShare, // lx: SPEC 156
 	}
 	cloned.SetServerName(cloned.serverName)
 	return cloned
@@ -316,6 +318,12 @@ func newUTLSClient(ctx context.Context, logger logger.ContextLogger, serverAddre
 	if err != nil {
 		return nil, err
 	}
+	// lx:begin SPEC 156
+	keyShare, err := lxUTLSKeyShare(options)
+	if err != nil {
+		return nil, err
+	}
+	// lx:end SPEC 156
 	var config Config = &UTLSClientConfig{
 		ctx:                   ctx,
 		config:                &tlsConfig,
@@ -329,6 +337,7 @@ func newUTLSClient(ctx context.Context, logger logger.ContextLogger, serverAddre
 		recordFragment:        options.RecordFragment,
 		spoof:                 spoof,
 		spoofMethod:           spoofMethod,
+		keyShare:              keyShare, // lx: SPEC 156
 	}
 	config.SetServerName(serverName)
 	if options.ECH != nil && options.ECH.Enabled {
