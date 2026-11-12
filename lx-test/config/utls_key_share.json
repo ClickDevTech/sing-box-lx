@@ -1,0 +1,53 @@
+{
+  "log": {
+    "level": "info"
+  },
+  "inbounds": [
+    {
+      "type": "mixed",
+      "tag": "mixed-in",
+      "listen": "127.0.0.1",
+      "listen_port": 2080
+    }
+  ],
+  "outbounds": [
+    {
+      "type": "vless",
+      "tag": "tls-tcp-classical",
+      "server": "example.com",
+      "server_port": 443,
+      "uuid": "00000000-0000-0000-0000-000000000000",
+      "tls": {
+        "enabled": true,
+        "server_name": "example.com",
+        "utls": {
+          "enabled": true,
+          "fingerprint": "chrome_155",
+          "key_share": "classical"
+        }
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "tls-xhttp-classical",
+      "server": "example.com",
+      "server_port": 443,
+      "uuid": "00000000-0000-0000-0000-000000000000",
+      "tls": {
+        "enabled": true,
+        "server_name": "example.com",
+        "alpn": ["h2"],
+        "utls": {
+          "enabled": true,
+          "fingerprint": "chrome_155",
+          "key_share": "classical"
+        }
+      },
+      "transport": {
+        "type": "xhttp",
+        "mode": "auto",
+        "path": "/xhttp"
+      }
+    }
+  ]
+}
