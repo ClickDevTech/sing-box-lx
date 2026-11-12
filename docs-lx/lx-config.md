@@ -909,6 +909,27 @@ servers require the hybrid share. The core cannot pick for you between "the serv
 and only fits older servers; for a new server on such a network the remaining levers are
 `record_fragment` (§9) and a `detour`.
 
+### Plain TLS: `tls.utls.key_share` (SPEC 156)
+
+The same string with the same values, but on `tls.utls`, for nodes with plain TLS (no REALITY):
+
+```json
+"tls": {
+  "enabled": true, "server_name": "example.com", "alpn": ["h2"],
+  "utls": { "enabled": true, "fingerprint": "chrome_155", "key_share": "classical" }
+}
+```
+
+The difference from REALITY is the server: a plain TLS server (an Xray TLS inbound of any version,
+Caddy, nginx, a CDN) picks X25519 when the client offers no ML-KEM, so `classical` breaks nothing on
+the server side. `chrome_155` with `classical`: ~700–800 B instead of ~1.9–2 KB, in one TCP segment.
+
+- Applies to raw TCP, WebSocket, HTTPUpgrade, gRPC, HTTP and XHTTP h1/h2 (all modes). Not to XHTTP
+  h3, Hysteria2, TUIC or other QUIC: uTLS does not build that hello.
+- Together with `reality.enabled` it is a config error: REALITY uses `reality.key_share` above.
+- `classical` together with `ech.enabled` is a config error (stripping inside ECH is not covered).
+- A typo is a load-time error, as with REALITY.
+
 ---
 
 ## 8. Observability (CommandClient extensions)

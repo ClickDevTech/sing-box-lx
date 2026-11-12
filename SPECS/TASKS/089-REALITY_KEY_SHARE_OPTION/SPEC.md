@@ -83,4 +83,4 @@
 
 ## Условие снятия
 
-Не хотфикс, а опция — снимать нечего. Что сторожить на мерже: фильтр `X25519MLKEM768` в `reality_client.go` должен стоять **только** под `case C.RealityKeyShareClassical`; безусловный фильтр апстрима, если он вернётся при мерже, уронит `TestLxRealityKeyShareDefaultKeepsHybrid` и стражи 083/086/087. Если апстрим заведёт свою опцию того же смысла (issue SagerNet#4520 без реакции) — переехать на его имя, оставив `key_share` алиасом на один релиз.
+Не хотфикс, а опция — снимать нечего. Что сторожить на мерже: фильтр `X25519MLKEM768` в `reality_client.go` должен стоять **только** под `case C.RealityKeyShareClassical` (с [156](../156-UTLS_KEY_SHARE_OPTION/SPEC.md) это вызов общего `lxStripHybridKeyShare` из `utls_key_share_lx.go`, тот же фильтр для `tls.utls.key_share`); безусловный фильтр апстрима, если он вернётся при мерже, уронит `TestLxRealityKeyShareDefaultKeepsHybrid` и стражи 083/086/087. Если апстрим заведёт свою опцию того же смысла (issue SagerNet#4520 без реакции) — переехать на его имя, оставив `key_share` алиасом на один релиз.

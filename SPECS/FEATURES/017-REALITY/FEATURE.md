@@ -29,6 +29,7 @@ REALITY — TLS-слой, в котором клиент выглядит как
 | `tls.reality.enabled` / `public_key` / `short_id` | апстримные | — | Включение REALITY; без изменений |
 | `tls.utls.fingerprint` | строка | `chrome` | Апстримный ключ, но **решает судьбу узла**: гибридный шар несут только `chrome`, `firefox`, `safari` (таблица ниже). Ядро отпечаток **не подменяет** |
 | `tls.reality.key_share` | `""` · `classical` · `hybrid` | `""` | `""` — как несёт отпечаток; `classical` — `X25519MLKEM768` вырезан из `key_share` и `supported_groups` (только Xray < v26.9.8); `hybrid` — гибрид обязателен, на отпечатке без него явная ошибка. Иное значение — ошибка при загрузке |
+| `tls.utls.key_share` | `""` · `classical` · `hybrid` | `""` | То же для обычного TLS (без REALITY, [156](../../TASKS/156-UTLS_KEY_SHARE_OPTION/SPEC.md)): обычный TLS-сервер принимает `classical`, ограничения по версии Xray нет. Вместе с `reality.enabled` — ошибка (у REALITY своя ручка); `classical` + ECH — ошибка |
 | `tls.fragment` / `tls.record_fragment` / `tls.fragment_fallback_delay` | апстримные | выкл. (под `detour` — `record_fragment` вкл., [060](../../TASKS/060-TLS_FRAGMENT_AUTO_ON_DETOUR/SPEC.md)) | Теперь применяются к REALITY-рукопожатию так же, как к uTLS/STD |
 
 ### Отпечатки и гибридный шар
@@ -102,12 +103,13 @@ REALITY — TLS-слой, в котором клиент выглядит как
 | [090 — REALITY_SHORT_ID_OVERFLOW_PANIC](../../TASKS/090-REALITY_SHORT_ID_OVERFLOW_PANIC/SPEC.md) | `short_id` длиннее 16 hex — ошибка конфигурации `invalid short_id` вместо паники процесса в `hex.Decode`; клиент и сервер | C |
 | [122 — UTLS_RELEASE_HANDSHAKE_STATE](../../TASKS/122-UTLS_RELEASE_HANDSHAKE_STATE/SPEC.md) | После TLS 1.3-рукопожатия uTLS/REALITY соединение отпускает ClientHello, ключи key share и объекты расширений (замер: −18…−25 КБ на соединение); ALPN подменяется один раз; метод в форке utls | I |
 | [123 — UTLS_RANDOMIZED_CONSISTENT](../../TASKS/123-UTLS_RANDOMIZED_CONSISTENT/SPEC.md) | `randomized` всегда с ALPN и гибридом в группах и шарах; пул `random` — только пресеты с гибридом (chrome/firefox/safari) — без «мёртвого до рестарта» узла | I |
+| [156 — UTLS_KEY_SHARE_OPTION](../../TASKS/156-UTLS_KEY_SHARE_OPTION/SPEC.md) | `tls.utls.key_share`: та же ручка `classical` / `hybrid` для обычного TLS (TCP, WS, gRPC, XHTTP h1/h2); фильтр гибрида вынесен в общую функцию с 089 | I |
 
 Задачи 053, 083, 086, 087, 088, 090 одновременно числятся хотфиксами в [HOTFIXES](../004-HOTFIXES/FEATURE.md) — там их условия снятия и что сторожить на мерже. Здесь — состояние фичи целиком.
 
 ## Документация
 
-`docs-lx/lx-config.md` / `.ru.md` §7 (`key_share`) и §9 (фрагментация под `detour`, включая REALITY); строка «REALITY (post-quantum key share)» и подраздел `key_share` в README; ноты релизов `v1.14.0-lx.36`, `v1.14.1-lx.2`…`lx.4`.
+`docs-lx/lx-config.md` / `.ru.md` §7 (`key_share`, включая `utls.key_share` для обычного TLS) и §9 (фрагментация под `detour`, включая REALITY); строка «REALITY (post-quantum key share)» и подраздел `key_share` в README; ноты релизов `v1.14.0-lx.36`, `v1.14.1-lx.2`…`lx.4`.
 
 Ликбез по механике и реализации в форке — `docs-lx/xray-protocols-explained.md` / `.ru.md`: §1 (отпечаток, гибридный key share, фрагментация под `detour`), §2 REALITY (session id, два исхода, проверка сервера, отличия от апстрима, пример, позиция апстрима), §3 Vision.
 

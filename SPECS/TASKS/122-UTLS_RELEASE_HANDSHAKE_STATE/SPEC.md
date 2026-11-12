@@ -99,6 +99,9 @@ Loopback, go1.26.8 darwin/arm64, 200 соединений, 3 раунда, ме�
   2. `UConn.HandshakeContext(ctx)`; при `nil` — `releaseHandshakeState` (R1, идемпотентно, страж R1a).
 - Апстримный `utlsALPNWrapper.HandshakeContext` не меняется: при пустом `nextProtocols` он не
   достигается.
+- **Дополнено [156](../156-UTLS_KEY_SHARE_OPTION/SPEC.md):** флаг переименован в `helloPrepared`,
+  шаг 1 стал `lxPrepareHello` (подмена ALPN, затем политика `utls.key_share`) и срабатывает также
+  при непустом `keyShare` (`withKeyShare`). Без `key_share` провод прежний.
 
 **Провод эквивалентен апстриму полностью:** та же последовательность в тот же момент (первый
 `HandshakeContext`); `UConn.handshakeContext` затем сам ещё раз зовёт `BuildHandshakeState`

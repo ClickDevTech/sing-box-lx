@@ -910,6 +910,27 @@ mlkem768x25519plus.<native|xorpub|random>.<0rtt|1rtt>[.<padding>…].<ключ>[
 выбор по-узловой. `classical` снижает постквантовую защиту и годится только для старых серверов;
 для нового сервера в такой сети остаются `record_fragment` (§9) и `detour`.
 
+### Обычный TLS: `tls.utls.key_share` (SPEC 156)
+
+Та же строка с теми же значениями, но в `tls.utls` — для узлов с обычным TLS (без REALITY):
+
+```json
+"tls": {
+  "enabled": true, "server_name": "example.com", "alpn": ["h2"],
+  "utls": { "enabled": true, "fingerprint": "chrome_155", "key_share": "classical" }
+}
+```
+
+Разница с REALITY — в сервере: обычный TLS-сервер (TLS-inbound Xray любой версии, Caddy, nginx, CDN)
+выбирает X25519, если клиент ML-KEM не предлагает, поэтому `classical` здесь ничего не ломает на
+серверной стороне. `chrome_155` с `classical`: ~700–800 байт вместо ~1,9–2 КБ, один TCP-сегмент.
+
+- Действует на raw TCP, WebSocket, HTTPUpgrade, gRPC, HTTP и XHTTP h1/h2 (все режимы). На XHTTP h3,
+  Hysteria2, TUIC и прочем QUIC — нет: там приветствие строит не uTLS.
+- Вместе с `reality.enabled` — ошибка конфига: для REALITY ручка `reality.key_share` выше.
+- `classical` вместе с `ech.enabled` — ошибка конфига (вырезание внутри ECH не покрыто).
+- Опечатка — ошибка при загрузке, как у REALITY.
+
 ---
 
 ## 8. Наблюдаемость (расширения CommandClient)
